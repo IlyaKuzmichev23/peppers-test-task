@@ -1,0 +1,15 @@
+{
+  "name": "peppers_test_task",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "type": "module",
+  "dependencies": {
+    "pixi.js": "^8.18.1"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
