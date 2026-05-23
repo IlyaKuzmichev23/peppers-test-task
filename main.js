@@ -21,25 +21,6 @@ export class Game {
         this.ball.y = 790;
         this.ball.fill(0xd4d00f);
         this.app.stage.addChild(this.ball);
-    }
-
-    game_cycle(){
-        this.vx = 5;
-        this.vy = -5;
-        this.app.ticker.add((time) => {
-            this.ball.x+=this.vx*time.deltaTime;
-            this.ball.y+=this.vy*time.deltaTime;
-            if(this.ball.x-10<=0 || this.ball.x+10>=800)
-                this.vx*=-1;
-            if(this.ball.y-10<=0)
-                this.vy*=-1;
-            if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x>=this.paddle.x && this.ball.x<=this.paddle.x+130))
-                this.vy*=-1;
-            if(this.move_left && this.paddle.x>0)
-                this.paddle.x -= 5*time.deltaTime;
-            if(this.move_right && this.paddle.x+130<800)
-                this.paddle.x += 5*time.deltaTime;
-        });
     };
 
     move_paddle(){
@@ -63,11 +44,14 @@ export class Game {
         this.blocks = [];
         let start_x = 12;
         let start_y = 100;
+        const colors = ["0xff0000", "0x0022ff", "0x1aff00", "0xe6ff00", "0x3614b3"];
         for(let i = 0; i<5; i++){
             for(let j = 0; j<11; j++){
                 let block = new Graphics();
-                block.rect(start_x, start_y, 66, 30);
-                block.fill(Math.random() * 0xFFFFFF);
+                block.rect(0, 0, 66, 30);
+                block.x = start_x;
+                block.y = start_y;
+                block.fill(colors[i]);
                 this.app.stage.addChild(block);
                 this.blocks.push(block);
                 start_x+=71;
@@ -75,7 +59,44 @@ export class Game {
             start_x = 12;
             start_y+=35;
         };
-    }
+    };
+
+    collie_blocks(){
+        for(let i=0; i<this.blocks.length; i++){
+            let block = this.blocks[i];
+            if(
+                (this.ball.x + 10 > block.x  && this.ball.x - 10 < block.x+66) &&
+                (this.ball.y + 10 > block.y && this.ball.y-10<block.y+30)
+                ){
+                    this.vy*=-1;
+                    this.app.stage.removeChild(block);
+                    this.blocks.splice(i,1);
+                }
+        }
+    };
+
+    game_cycle(){
+        this.vx = 5;
+        this.vy = -5;
+        this.app.ticker.add((time) => {
+            this.ball.x+=this.vx*time.deltaTime;
+            this.ball.y+=this.vy*time.deltaTime;
+            if(this.ball.x-10<=0 || this.ball.x+10>=800)
+                this.vx*=-1;
+            if(this.ball.y-10<=0)
+                this.vy*=-1;
+            if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+130))
+                this.vy*=-1;
+            if(this.move_left && this.paddle.x>0)
+                this.paddle.x -= 5*time.deltaTime;
+            if(this.move_right && this.paddle.x+130<800)
+                this.paddle.x += 5*time.deltaTime;
+
+            this.collie_blocks();
+        });
+    };
+
+
     async init(){
         this.app = new Application();
 
