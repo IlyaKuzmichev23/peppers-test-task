@@ -9,6 +9,15 @@ export class Game {
         this.buffs = [];
     }
 
+    create_border(){
+        this.border = new Graphics();
+        this.border.rect(0, 0,400, 900);
+        this.border.x = 800;
+        this.border.y = 0;
+        this.border.fill(0x1f2120);
+        this.app.stage.addChild(this.border);
+    };
+
     create_paddle() {
         this.paddle = new Graphics();
         this.paddle.rect(0,0,this.paddle_width,20);
@@ -16,7 +25,7 @@ export class Game {
         this.paddle.y = this.paddle_coordinate_y;
         this.paddle.fill(0x273591);
         this.app.stage.addChild(this.paddle);
-    }
+    };
 
     create_ball(){
         this.ball = new Graphics();
@@ -77,7 +86,7 @@ export class Game {
                     this.blocks.splice(i,1);
                     this.score += 100;
                     this.score_text.text = "Score:" + this.score;
-                    if(Math.random()<0.5){
+                    if(Math.random()<0.999){
                         this.create_buff(block.x, block.y);
                     }
                 }
@@ -91,11 +100,13 @@ export class Game {
             text: "Score:0",
             style:{
                 fill: 0xffffff,
-                fontSize: 32
+                fontSize: 32,
+                fontFamily: "monospace",
+                fontWeight: "bold"
             }
         });
-        this.score_text.x = 20;
-        this.score_text.y = 20;
+        this.score_text.x = 900;
+        this.score_text.y = 100;
 
         this.app.stage.addChild(this.score_text);
     };
@@ -144,9 +155,15 @@ export class Game {
             if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+this.paddle_width))
                 this.vy*=-1;
             if(this.move_left && this.paddle.x>0)
-                this.paddle.x -= 5*time.deltaTime;
+                if(this.paddle.x-5<0)
+                    this.paddle.x=0
+                else
+                    this.paddle.x -= 5*time.deltaTime;
             if(this.move_right && this.paddle.x+this.paddle_width<800)
-                this.paddle.x += 5*time.deltaTime;
+                if(this.paddle.x+this.paddle_width+5>800)
+                    this.paddle.x = 800-this.paddle_width;
+                else
+                    this.paddle.x += 5*time.deltaTime;
             this.collie_blocks();
         });
     };
@@ -156,7 +173,7 @@ export class Game {
         this.app = new Application();
 
         await this.app.init({
-            width: 800,
+            width: 1200,
             height: 900,
             background: 0x808080,
             antialias:  true,
@@ -165,6 +182,9 @@ export class Game {
         });
 
         document.body.appendChild(this.app.canvas);
+
+        //граница
+        this.create_border();
 
         //платформа
         this.create_paddle();
