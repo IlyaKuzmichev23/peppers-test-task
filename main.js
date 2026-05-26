@@ -116,9 +116,11 @@ export class Game {
     };
 
     create_buff(x,y){
-        let buff = new Graphics();
-        buff.rect(0,0,20,20);
-        buff.fill(0xf257ea);
+        const buff = new Sprite(this.texture_buff);
+        buff.anchor.set(0.5);
+
+        buff.width = 20;
+        buff.height = 20;
 
         buff.x = x;
         buff.y = y;
@@ -186,6 +188,8 @@ export class Game {
         });
 
         document.body.appendChild(this.app.canvas);
+
+        this.texture_buff = await Assets.load("/images/star.png");
 
         //граница
         this.create_border();
