@@ -1,4 +1,4 @@
-import { Application, effectsMixin, Graphics, Text} from "pixi.js";
+import { Application, effectsMixin, Graphics, Text, Sprite, Assets} from "pixi.js";
 
 export class Game {
     constructor(){
@@ -18,21 +18,24 @@ export class Game {
         this.app.stage.addChild(this.border);
     };
 
-    create_paddle() {
-        this.paddle = new Graphics();
-        this.paddle.rect(0,0,this.paddle_width,20);
+    async create_paddle() {
+        const texture = await Assets.load("/images/paddle.png");
+        this.paddle = new Sprite(texture);
         this.paddle.x = this.paddle_coordinate_x;
         this.paddle.y = this.paddle_coordinate_y;
-        this.paddle.fill(0x273591);
+        this.paddle.width = this.paddle_width;
+        this.paddle.height = 20;
         this.app.stage.addChild(this.paddle);
     };
 
-    create_ball(){
-        this.ball = new Graphics();
-        this.ball.circle(0,0,10);
+    async create_ball(){
+        const texture = await Assets.load("/images/ball.png");
+        this.ball = new Sprite(texture);
+        this.ball.anchor.set(0.5);
+        this.ball.width = 20;
+        this.ball.height = 20;
         this.ball.x = 400;
         this.ball.y = 790;
-        this.ball.fill(0xd4d00f);
         this.app.stage.addChild(this.ball);
     };
 
@@ -53,18 +56,19 @@ export class Game {
         });
     };
 
-    create_blocks(){
+    async create_blocks(){
         this.blocks = [];
         let start_x = 12;
         let start_y = 100;
-        const colors = ["0xff0000", "0x0022ff", "0x1aff00", "0xe6ff00", "0x3614b3"];
+        const blocks = ["block1.png", "block2.png", "block3.png", "block4.png", "block5.png"];
         for(let i = 0; i<5; i++){
+            const texture = await Assets.load(`/images/${blocks[i]}`);
             for(let j = 0; j<11; j++){
-                let block = new Graphics();
-                block.rect(0, 0, 66, 30);
+                const block = new Sprite(texture);
+                block.width = 66;
+                block.height = 30;
                 block.x = start_x;
                 block.y = start_y;
-                block.fill(colors[i]);
                 this.app.stage.addChild(block);
                 this.blocks.push(block);
                 start_x+=71;
@@ -187,7 +191,7 @@ export class Game {
         this.create_border();
 
         //платформа
-        this.create_paddle();
+        await this.create_paddle();
 
         //шар
         this.create_ball();
@@ -196,7 +200,7 @@ export class Game {
         this.move_paddle();
 
         //создание блоков
-        this.create_blocks();
+        await this.create_blocks();
 
         //вывод счёта
         this.score_out();
