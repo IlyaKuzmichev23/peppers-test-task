@@ -80,7 +80,7 @@ export class Game {
         };
     };
 
-    collie_blocks(){
+    collide_blocks(){
         for(let i=0; i<this.blocks.length; i++){
             let block = this.blocks[i];
             if(
@@ -88,6 +88,8 @@ export class Game {
                 (this.ball.y + 10 > block.y && this.ball.y-10<block.y+30)
                 ){
                     this.vy*=-1;
+                    this.hit_sound.currentTime = 0;
+                    this.hit_sound.play();
                     this.app.stage.removeChild(block);
                     this.blocks.splice(i,1);
                     this.score += 100;
@@ -180,6 +182,8 @@ export class Game {
                 ){
                     this.paddle_width+=30;
                     this.paddle_coordinate_x=this.paddle.x-15;
+                    this.buff_sound.currentTime = 0;
+                    this.buff_sound.play();
                     this.app.stage.removeChild(buff);
                     this.app.stage.removeChild(this.paddle);
                     this.buffs.splice(i,1);
@@ -189,6 +193,7 @@ export class Game {
             //столкновение
             if(this.ball.x-10<=0 || this.ball.x+10>=800)
                 this.vx*=-1;
+
             if(this.ball.y-10<=0)
                 this.vy*=-1;
             if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+this.paddle_width))
@@ -203,7 +208,7 @@ export class Game {
                     this.paddle.x = 800-this.paddle_width;
                 else
                     this.paddle.x += 5*time.deltaTime;
-            this.collie_blocks();
+            this.collide_blocks();
 
             //условие окончания игры
             if(this.ball.y > 900){
@@ -230,6 +235,10 @@ export class Game {
         document.body.appendChild(this.app.canvas);
 
         this.texture_buff = await Assets.load("/images/star.png");
+
+        this.hit_sound = new Audio("/sounds/hit.wav");
+
+        this.buff_sound = new Audio("/sounds/buff.wav");
 
         //граница
         this.create_border();
