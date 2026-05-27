@@ -7,6 +7,8 @@ export class Game {
         this.paddle_coordinate_x = 335;
         this.paddle_coordinate_y = 800;
         this.buffs = [];
+        this.is_pause = false;
+        this.game_over = false;
     }
 
     create_border(){
@@ -97,6 +99,23 @@ export class Game {
         }
     };
 
+    show_game_over(){
+        this.game_over_text = new Text({
+            text: "GAME OVER",
+            style:{
+                fill: 0xffffff,
+                fontSize: 64,
+                fontFamily:"fantasy",
+                fontWeight: "bold"
+            }
+        })
+        this.game_over_text.anchor.set(0.5);
+        this.game_over_text.x = 400;
+        this.game_over_text.y = 450;
+
+        this.app.stage.addChild(this.game_over_text);
+    };
+
     score_out(){
         this.score = 0;
         
@@ -131,10 +150,24 @@ export class Game {
         this.buffs.push(buff);
     };
 
+
+    pause(){
+        window.addEventListener("keydown", (e)=>{
+            if(e.code=="Space")
+                if(this.game_over)
+                    location.reload();
+                else
+                    this.is_pause = !this.is_pause;
+        });
+    };
+
     game_cycle(){
         this.vx = 5;
         this.vy = -5;
         this.app.ticker.add((time) => {
+            //проверка паузы или окончания игры
+            if(this.is_pause || this.game_over)
+                return;
             //движение
             this.ball.x+=this.vx*time.deltaTime;
             this.ball.y+=this.vy*time.deltaTime;
@@ -171,6 +204,13 @@ export class Game {
                 else
                     this.paddle.x += 5*time.deltaTime;
             this.collie_blocks();
+
+            //условие окончания игры
+            if(this.ball.y > 900){
+                this.game_over = true;
+                this.app.stage.removeChild(this.ball);
+                this.show_game_over();
+            }
         });
     };
 
@@ -211,6 +251,9 @@ export class Game {
 
         //игровой цикл
         this.game_cycle();
+
+        //пауза
+        this.pause();
 
     };
 
