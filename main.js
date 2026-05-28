@@ -9,6 +9,19 @@ export class Game {
         this.buffs = [];
         this.is_pause = false;
         this.game_over = false;
+        this.win = false;
+        this.ball_speed = 8;
+        this.paddle_speed = 10;
+    }
+
+    async create_background(){
+        const texture = await Assets.load("/images/background.png");
+        this.background = new Sprite(texture);
+        this.background.x=0;
+        this.background.y=0;
+        this.background.width=800;
+        this.background.height=900;
+        this.app.stage.addChild(this.background);
     }
 
     create_border(){
@@ -118,6 +131,23 @@ export class Game {
         this.app.stage.addChild(this.game_over_text);
     };
 
+    show_win(){
+        this.win_text = new Text({
+            text: "YOU WIN",
+            style:{
+                fill: 0xffffff,
+                fontSize: 64,
+                fontFamily:"fantasy",
+                fontWeight: "bold"
+            }
+        })
+        this.win_text.anchor.set(0.5);
+        this.win_text.x = 400;
+        this.win_text.y = 450;
+
+        this.app.stage.addChild(this.win_text);
+    };
+
     score_out(){
         this.score = 0;
         
@@ -164,11 +194,11 @@ export class Game {
     };
 
     game_cycle(){
-        this.vx = 5;
-        this.vy = -5;
+        this.vx = 0;
+        this.vy = -this.ball_speed;
         this.app.ticker.add((time) => {
             //проверка паузы или окончания игры
-            if(this.is_pause || this.game_over)
+            if(this.is_pause || this.game_over || this.win)
                 return;
             //движение
             this.ball.x+=this.vx*time.deltaTime;
@@ -182,6 +212,9 @@ export class Game {
                 ){
                     this.paddle_width+=30;
                     this.paddle_coordinate_x=this.paddle.x-15;
+                    while(this.paddle_coordinate_x+this.paddle_width>800){
+                        this.paddle_coordinate_x-=1;
+                    }
                     this.buff_sound.currentTime = 0;
                     this.buff_sound.play();
                     this.app.stage.removeChild(buff);
@@ -193,28 +226,48 @@ export class Game {
             //столкновение
             if(this.ball.x-10<=0 || this.ball.x+10>=800)
                 this.vx*=-1;
-
             if(this.ball.y-10<=0)
                 this.vy*=-1;
-            if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+this.paddle_width))
-                this.vy*=-1;
+            if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+this.paddle_width)){
+                const paddle_center = this.paddle.x+this.paddle_width/2;
+                const ball_distance = this.ball.x - paddle_center;
+                this.vx = ball_distance * 0.15;
+
+                if(this.vx > this.ball_speed - 1)
+                    this.vx = this.ball_speed - 1;
+
+                if(this.vx < -this.ball_speed + 1)
+                    this.vx = -this.ball_speed + 1;
+
+                this.vy = -Math.sqrt(
+                    this.ball_speed * this.ball_speed -
+                    this.vx * this.vx
+                );
+            }
+            this.collide_blocks();
+
+            //движение платформы
             if(this.move_left && this.paddle.x>0)
-                if(this.paddle.x-5<0)
+                if(this.paddle.x-10<0)
                     this.paddle.x=0
                 else
-                    this.paddle.x -= 5*time.deltaTime;
+                    this.paddle.x -= this.paddle_speed*time.deltaTime;
             if(this.move_right && this.paddle.x+this.paddle_width<800)
-                if(this.paddle.x+this.paddle_width+5>800)
+                if(this.paddle.x+this.paddle_width+this.paddle_speed>800)
                     this.paddle.x = 800-this.paddle_width;
                 else
-                    this.paddle.x += 5*time.deltaTime;
-            this.collide_blocks();
+                    this.paddle.x += 10*time.deltaTime;
 
             //условие окончания игры
             if(this.ball.y > 900){
                 this.game_over = true;
                 this.app.stage.removeChild(this.ball);
                 this.show_game_over();
+            }
+            if(this.score==5500){
+                this.win = true;
+                this.app.stage.removeChild(this.ball);
+                this.show_win();
             }
         });
     };
@@ -239,6 +292,9 @@ export class Game {
         this.hit_sound = new Audio("/sounds/hit.wav");
 
         this.buff_sound = new Audio("/sounds/buff.wav");
+
+        //фон
+        await this.create_background();
 
         //граница
         this.create_border();
