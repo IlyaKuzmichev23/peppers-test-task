@@ -3,9 +3,10 @@ import { Application, effectsMixin, Graphics, Text, Sprite, Assets} from "pixi.j
 export class Game {
     constructor(){
         this.app = null;
+        this.frame_thickness = 70;
         this.paddle_width = 130;
-        this.paddle_coordinate_x = 335;
-        this.paddle_coordinate_y = 800;
+        this.paddle_coordinate_x = 335+this.frame_thickness;
+        this.paddle_coordinate_y = 800+this.frame_thickness;
         this.buffs = [];
         this.is_pause = false;
         this.game_over = false;
@@ -14,11 +15,21 @@ export class Game {
         this.paddle_speed = 10;
     }
 
+    async create_frame(){
+        const texture = await Assets.load("/images/frame.png");
+        this.frame = new Sprite(texture);
+        this.frame.x = 0;
+        this.frame.y = 0;
+        this.frame.width=800+this.frame_thickness*2;
+        this.frame.height=900+this.frame_thickness;
+        this.app.stage.addChild(this.frame);
+    }
+
     async create_background(){
         const texture = await Assets.load("/images/background.png");
         this.background = new Sprite(texture);
-        this.background.x=0;
-        this.background.y=0;
+        this.background.x=this.frame_thickness;
+        this.background.y=this.frame_thickness;
         this.background.width=800;
         this.background.height=900;
         this.app.stage.addChild(this.background);
@@ -26,8 +37,8 @@ export class Game {
 
     create_border(){
         this.border = new Graphics();
-        this.border.rect(0, 0,400, 900);
-        this.border.x = 800;
+        this.border.rect(0, 0,400, 900+this.frame_thickness);
+        this.border.x = 800+this.frame_thickness*2;
         this.border.y = 0;
         this.border.fill(0x1f2120);
         this.app.stage.addChild(this.border);
@@ -49,8 +60,8 @@ export class Game {
         this.ball.anchor.set(0.5);
         this.ball.width = 20;
         this.ball.height = 20;
-        this.ball.x = 400;
-        this.ball.y = 790;
+        this.ball.x = 400+this.frame_thickness;
+        this.ball.y = 790+this.frame_thickness;
         this.app.stage.addChild(this.ball);
     };
 
@@ -73,8 +84,8 @@ export class Game {
 
     async create_blocks(){
         this.blocks = [];
-        let start_x = 12;
-        let start_y = 100;
+        let start_x = 12+this.frame_thickness;
+        let start_y = 100+this.frame_thickness;
         const blocks = ["block1.png", "block2.png", "block3.png", "block4.png", "block5.png"];
         for(let i = 0; i<5; i++){
             const texture = await Assets.load(`/images/${blocks[i]}`);
@@ -88,7 +99,7 @@ export class Game {
                 this.blocks.push(block);
                 start_x+=71;
             };
-            start_x = 12;
+            start_x = 12+this.frame_thickness;
             start_y+=35;
         };
     };
@@ -107,7 +118,7 @@ export class Game {
                     this.blocks.splice(i,1);
                     this.score += 100;
                     this.score_text.text = "Score:" + this.score;
-                    if(Math.random()<0.999){
+                    if(Math.random()<0.3){
                         this.create_buff(block.x, block.y);
                     }
                 }
@@ -125,8 +136,8 @@ export class Game {
             }
         })
         this.game_over_text.anchor.set(0.5);
-        this.game_over_text.x = 400;
-        this.game_over_text.y = 450;
+        this.game_over_text.x = 400+this.frame_thickness;
+        this.game_over_text.y = 450+this.frame_thickness;
 
         this.app.stage.addChild(this.game_over_text);
     };
@@ -142,8 +153,8 @@ export class Game {
             }
         })
         this.win_text.anchor.set(0.5);
-        this.win_text.x = 400;
-        this.win_text.y = 450;
+        this.win_text.x = 400+this.frame_thickness;
+        this.win_text.y = 450+this.frame_thickness;
 
         this.app.stage.addChild(this.win_text);
     };
@@ -160,8 +171,8 @@ export class Game {
                 fontWeight: "bold"
             }
         });
-        this.score_text.x = 900;
-        this.score_text.y = 100;
+        this.score_text.x = 900+this.frame_thickness*2;
+        this.score_text.y = 200;
 
         this.app.stage.addChild(this.score_text);
     };
@@ -212,9 +223,15 @@ export class Game {
                 ){
                     this.paddle_width+=30;
                     this.paddle_coordinate_x=this.paddle.x-15;
-                    while(this.paddle_coordinate_x+this.paddle_width>800){
-                        this.paddle_coordinate_x-=1;
+
+                    if(this.paddle_coordinate_x+this.paddle_width > 800+this.frame_thickness){
+                        this.paddle_coordinate_x = 800+this.frame_thickness - this.paddle_width;
                     }
+
+                    if(this.paddle_coordinate_x<this.frame_thickness){
+                        this.paddle_coordinate_x = this.frame_thickness;
+                    }
+
                     this.buff_sound.currentTime = 0;
                     this.buff_sound.play();
                     this.app.stage.removeChild(buff);
@@ -222,11 +239,15 @@ export class Game {
                     this.buffs.splice(i,1);
                     this.create_paddle();
                 };
+                if(buff.y>900+this.frame_thickness){
+                    this.app.stage.removeChild(buff);
+                    this.buffs.splice(i,1);
+                }
             }
             //столкновение
-            if(this.ball.x-10<=0 || this.ball.x+10>=800)
+            if(this.ball.x-10<=this.frame_thickness || this.ball.x+10>=800+this.frame_thickness)
                 this.vx*=-1;
-            if(this.ball.y-10<=0)
+            if(this.ball.y-10<=this.frame_thickness)
                 this.vy*=-1;
             if((this.ball.y+10>=this.paddle.y && this.ball.y<this.paddle.y) && (this.ball.x+10>=this.paddle.x && this.ball.x-10<=this.paddle.x+this.paddle_width)){
                 const paddle_center = this.paddle.x+this.paddle_width/2;
@@ -247,19 +268,19 @@ export class Game {
             this.collide_blocks();
 
             //движение платформы
-            if(this.move_left && this.paddle.x>0)
-                if(this.paddle.x-10<0)
-                    this.paddle.x=0
+            if(this.move_left && this.paddle.x>0+this.frame_thickness)
+                if(this.paddle.x-10<0+this.frame_thickness)
+                    this.paddle.x=0+this.frame_thickness
                 else
                     this.paddle.x -= this.paddle_speed*time.deltaTime;
-            if(this.move_right && this.paddle.x+this.paddle_width<800)
-                if(this.paddle.x+this.paddle_width+this.paddle_speed>800)
-                    this.paddle.x = 800-this.paddle_width;
+            if(this.move_right && this.paddle.x+this.paddle_width<800+this.frame_thickness)
+                if(this.paddle.x+this.paddle_width+this.paddle_speed>800+this.frame_thickness)
+                    this.paddle.x = 800+this.frame_thickness-this.paddle_width;
                 else
                     this.paddle.x += 10*time.deltaTime;
 
             //условие окончания игры
-            if(this.ball.y > 900){
+            if(this.ball.y > 900+this.frame_thickness){
                 this.game_over = true;
                 this.app.stage.removeChild(this.ball);
                 this.show_game_over();
@@ -277,8 +298,8 @@ export class Game {
         this.app = new Application();
 
         await this.app.init({
-            width: 1200,
-            height: 900,
+            width: 1200+this.frame_thickness*2,
+            height: 900+this.frame_thickness,
             background: 0x808080,
             antialias:  true,
             resolution: window.devicePixelRatio || 1,
@@ -298,6 +319,9 @@ export class Game {
 
         //граница
         this.create_border();
+
+        //рамка
+        await this.create_frame();
 
         //платформа
         await this.create_paddle();
