@@ -11,7 +11,7 @@ export class Game {
         this.is_pause = false;
         this.game_over = false;
         this.win = false;
-        this.ball_speed = 8;
+        this.ball_speed = 10;
         this.paddle_speed = 10;
     }
 
@@ -23,7 +23,7 @@ export class Game {
         this.frame.width=800+this.frame_thickness*2;
         this.frame.height=900+this.frame_thickness;
         this.app.stage.addChild(this.frame);
-    }
+    };
 
     async create_background(){
         const texture = await Assets.load("/images/background.png");
@@ -33,7 +33,22 @@ export class Game {
         this.background.width=800;
         this.background.height=900;
         this.app.stage.addChild(this.background);
-    }
+    };
+
+    async create_app(){
+        this.app = new Application();
+
+        await this.app.init({
+            width: 1200+this.frame_thickness*2,
+            height: 900+this.frame_thickness,
+            background: 0x808080,
+            antialias:  true,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+        });
+
+        document.body.appendChild(this.app.canvas);
+    };
 
     create_border(){
         this.border = new Graphics();
@@ -118,7 +133,7 @@ export class Game {
                     this.blocks.splice(i,1);
                     this.score += 100;
                     this.score_text.text = "Score:" + this.score;
-                    if(Math.random()<0.3){
+                    if(Math.random()<0.1){
                         this.create_buff(block.x, block.y);
                     }
                 }
@@ -211,7 +226,7 @@ export class Game {
             //проверка паузы или окончания игры
             if(this.is_pause || this.game_over || this.win)
                 return;
-            //движение
+            //поведение баффа
             this.ball.x+=this.vx*time.deltaTime;
             this.ball.y+=this.vy*time.deltaTime;
             for(let i = 0; i<this.buffs.length; i++){
@@ -244,7 +259,7 @@ export class Game {
                     this.buffs.splice(i,1);
                 }
             }
-            //столкновение
+            //столкновение шара
             if(this.ball.x-10<=this.frame_thickness || this.ball.x+10>=800+this.frame_thickness)
                 this.vx*=-1;
             if(this.ball.y-10<=this.frame_thickness)
@@ -295,18 +310,8 @@ export class Game {
 
 
     async init(){
-        this.app = new Application();
-
-        await this.app.init({
-            width: 1200+this.frame_thickness*2,
-            height: 900+this.frame_thickness,
-            background: 0x808080,
-            antialias:  true,
-            resolution: window.devicePixelRatio || 1,
-            autoDensity: true,
-        });
-
-        document.body.appendChild(this.app.canvas);
+        //приложение
+        await this.create_app();
 
         this.texture_buff = await Assets.load("/images/star.png");
 
